@@ -1,4 +1,3 @@
--- ENI Hub v2 | Drawing IMGUI
 repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer
 
 local Players = game:GetService("Players")
@@ -11,7 +10,7 @@ local SECRET = "E7n1HuB_S3cr3t_K3y!_2026#Pr3mium"
 local authenticated = false
 local keyStr = ""
 
--- ===== DRAWING =====
+-- Drawing
 local drawObjs={};local conns={}
 local function d(t,p)
     local o=Drawing.new(t)
@@ -25,7 +24,7 @@ local function kill()
     for _,v in ipairs(drawObjs)pcall(v.Remove,v)end drawObjs={}
 end
 
--- ===== PURE LUA SHA-256 =====
+-- Pure Lua SHA-256
 local function ror(x,n)x=x%0x100000000 n=n%32 local low=x%(2^n)local high=math.floor(x/(2^n))return low*2^(32-n)+high end
 local function band(x,y)local r=0 local m=1 while x>0 or y>0 do if x%2==1 and y%2==1 then r=r+m end x=math.floor(x/2)y=math.floor(y/2)m=m*2 end return r end
 local function bor(x,y)local r=0 local m=1 while x>0 or y>0 do if x%2==1 or y%2==1 then r=r+m end x=math.floor(x/2)y=math.floor(y/2)m=m*2 end return r end
@@ -100,38 +99,34 @@ local function validateKey(key)
     return true
 end
 
--- ===== COLORS =====
-local C = {
-    bg = Color3.fromRGB(8,8,12),
-    panel = Color3.fromRGB(12,12,16),
-    border = Color3.fromRGB(0,180,210),
-    text = Color3.fromRGB(215,215,225),
-    sub = Color3.fromRGB(130,130,140),
-    dim = Color3.fromRGB(70,70,80),
-    green = Color3.fromRGB(46,204,113),
-    red = Color3.fromRGB(220,60,60),
-    btnOff = Color3.fromRGB(45,45,52),
-    btnOn = Color3.fromRGB(0,180,210),
-    btnHover = Color3.fromRGB(55,55,62),
-    inputBg = Color3.fromRGB(16,16,20),
-}
+-- Colors
+local c_bg = Color3.fromRGB(8,8,12)
+local c_panel = Color3.fromRGB(12,12,16)
+local c_accent = Color3.fromRGB(0,180,210)
+local c_text = Color3.fromRGB(215,215,225)
+local c_sub = Color3.fromRGB(130,130,140)
+local c_dim = Color3.fromRGB(70,70,80)
+local c_green = Color3.fromRGB(46,204,113)
+local c_red = Color3.fromRGB(220,60,60)
+local c_btnOff = Color3.fromRGB(45,45,52)
+local c_btnHov = Color3.fromRGB(55,55,62)
 
--- ===== KEY ENTRY UI =====
+-- Key UI
 local k = {}
 k.overlay = d("Square",{Color=Color3.fromRGB(0,0,0),Filled=true,Transparency=0.6})
-k.bg = d("Square",{Color=C.panel,Filled=true,Transparency=1})
-k.border = d("Square",{Color=C.border,Filled=false,Thickness=2,Transparency=1})
-k.title = d("Text",{Text="ENI HUB",Color=C.border,Size=30,Center=true,Font=3,Outline=true,OutlineColor=Color3.new(0,0,0)})
-k.sub = d("Text",{Text="ENTER YOUR KEY",Color=C.sub,Size=13,Center=true,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
-k.inBg = d("Square",{Color=C.inputBg,Filled=true,Transparency=1})
-k.inBorder = d("Square",{Color=C.border,Filled=false,Thickness=1,Transparency=1})
-k.input = d("Text",{Text="",Color=C.text,Size=20,Center=true,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
-k.cursor = d("Text",{Text="|",Color=C.border,Size=20,Center=true,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
-k.status = d("Text",{Text="",Color=C.red,Size=14,Center=true,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
-k.hint = d("Text",{Text="Key from seller  Â·  Enter to submit  Â·  Esc to leave",Color=C.dim,Size=10,Center=true,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
+k.bg = d("Square",{Color=c_panel,Filled=true,Transparency=1})
+k.border = d("Square",{Color=c_accent,Filled=false,Thickness=2,Transparency=1})
+k.title = d("Text",{Text="ENI HUB",Color=c_accent,Size=30,Center=true,Font=3,Outline=true,OutlineColor=Color3.new(0,0,0)})
+k.sub = d("Text",{Text="ENTER YOUR KEY",Color=c_sub,Size=13,Center=true,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
+k.inBg = d("Square",{Color=Color3.fromRGB(16,16,20),Filled=true,Transparency=1})
+k.inBorder = d("Square",{Color=c_accent,Filled=false,Thickness=1,Transparency=1})
+k.inText = d("Text",{Text="",Color=c_text,Size=20,Center=true,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
+k.cursor = d("Text",{Text="|",Color=c_accent,Size=20,Center=true,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
+k.status = d("Text",{Text="",Color=c_red,Size=14,Center=true,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
+k.hint = d("Text",{Text="Key from seller - Enter to submit",Color=c_dim,Size=10,Center=true,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
 
-local kBlink = true
-task.spawn(function() while true do task.wait(0.5) kBlink=not kBlink end end)
+local blink = true
+task.spawn(function() while true do task.wait(0.5) blink=not blink end end)
 
 local function drawKey(vp)
     local cx,cy = vp.X/2, vp.Y/2
@@ -145,9 +140,9 @@ local function drawKey(vp)
     local ibx,iby,ibw,ibh = cx-150, py+76, 300, 44
     k.inBg.Position = Vector2.new(ibx,iby); k.inBg.Size = Vector2.new(ibw,ibh); k.inBg.Visible = true
     k.inBorder.Position = Vector2.new(ibx,iby); k.inBorder.Size = Vector2.new(ibw,ibh); k.inBorder.Visible = true
-    local tw = k.input.TextBounds.X
-    k.input.Text = keyStr; k.input.Position = Vector2.new(cx, iby+ibh/2-6); k.input.Visible = true
-    k.cursor.Visible = kBlink and true or false; k.cursor.Position = Vector2.new(cx+tw/2+4, iby+ibh/2-6)
+    k.inText.Text = keyStr; k.inText.Position = Vector2.new(cx, iby+ibh/2-6); k.inText.Visible = true
+    local tw = k.inText.TextBounds.X
+    k.cursor.Visible = blink; k.cursor.Position = Vector2.new(cx+tw/2+6, iby+ibh/2-6)
     k.status.Position = Vector2.new(cx, py+132); k.status.Visible = true
     k.hint.Position = Vector2.new(cx, py+240); k.hint.Visible = true
 end
@@ -159,10 +154,10 @@ c(UIS,"InputBegan",function(input)
         if kc==Enum.KeyCode.Return or kc==Enum.KeyCode.KeypadEnter then
             if#keyStr==0 then return end
             if validateKey(keyStr)then
-                k.status.Text="âs Key accepted"k.status.Color=C.green
+                k.status.Text="Key accepted"k.status.Color=c_green
                 task.wait(0.5)authenticated=true;k.status.Text=""
             else
-                k.status.Text="ãs Invalid key"k.status.Color=C.red
+                k.status.Text="Invalid key"k.status.Color=c_red
                 keyStr=""
             end;return
         end
@@ -176,18 +171,16 @@ c(UIS,"InputBegan",function(input)
     end
 end)
 
--- ===== HITBOX HELPERS =====
+-- Track mouse
 local mPos = Vector2.new(0,0)
-local hovered = nil
-local function hit(x,y,w,h)return mPos.X>=x and mPos.X<=x+w and mPos.Y>=y and mPos.Y<=y+h end
 
--- ===== FEATURES =====
+-- Features
 local aimOn=false;local espOn=false;local traceOn=false;local fovOn=false;local radarOn=false
 local aimFov=200;local smooth=0.6
 
 local espPool={}
 local function getEsp(i)
-    while #espPool<i do table.insert(espPool,{box=d("Square",{Color=Color3.fromRGB(0,180,210),Thickness=1.5,Filled=false,Transparency=1}),fill=d("Square",{Color=Color3.new(0,0,0),Filled=true,Transparency=0.55}),nam=d("Text",{Color=Color3.fromRGB(220,220,230),Size=13,Center=true,Outline=true,OutlineColor=Color3.new(0,0,0)}),dist=d("Text",{Color=Color3.fromRGB(140,140,150),Size=11,Center=true,Outline=true,OutlineColor=Color3.new(0,0,0)}),hp=d("Square",{Color=Color3.fromRGB(55,200,95),Filled=true,Transparency=1}),hpb=d("Square",{Color=Color3.fromRGB(30,30,30),Filled=true,Transparency=1}),tr=d("Line",{Color=Color3.fromRGB(0,180,210),Thickness=1,Transparency=1})})end
+    while #espPool<i do table.insert(espPool,{box=d("Square",{Color=c_accent,Thickness=1.5,Filled=false,Transparency=1}),fill=d("Square",{Color=Color3.new(0,0,0),Filled=true,Transparency=0.55}),nam=d("Text",{Color=c_text,Size=13,Center=true,Outline=true,OutlineColor=Color3.new(0,0,0)}),dist=d("Text",{Color=c_sub,Size=11,Center=true,Outline=true,OutlineColor=Color3.new(0,0,0)}),hp=d("Square",{Color=Color3.fromRGB(55,200,95),Filled=true,Transparency=1}),hpb=d("Square",{Color=Color3.fromRGB(30,30,30),Filled=true,Transparency=1}),tr=d("Line",{Color=c_accent,Thickness=1,Transparency=1})})end
     return espPool[i]
 end
 local function hideEsp(i)local e=espPool[i];if not e then return end
@@ -203,80 +196,76 @@ local rDots={}
 local function getRD(i)while #rDots<i do table.insert(rDots,{dot=d("Square",{Color=Color3.fromRGB(255,50,50),Size=Vector2.new(4,4),Filled=true,Transparency=1}),lbl=d("Text",{Color=Color3.fromRGB(255,255,255),Size=9,Center=true,Outline=true,OutlineColor=Color3.new(0,0,0)})})end return rDots[i]end
 local function hideRD(i)local r=rDots[i];if r then r.dot.Visible=false;r.lbl.Visible=false end end
 
--- ===== KEY LOOP =====
+-- Key render loop
 local authCon = RunService.RenderStepped:Connect(function()
     local Camera=workspace.CurrentCamera;if not Camera then return end
     if not authenticated then drawKey(Camera.ViewportSize) end
 end)
 
--- ===== MENU AWAIT =====
+-- After auth
 local waitCon = RunService.RenderStepped:Connect(function()
     if not authenticated then return end
     waitCon:Disconnect();authCon:Disconnect()
 
-    -- hide key UI
-    for _,o in pairs(k)do if type(o)=="table"then for _,v in pairs(o)do if type(v)=="userdata"then pcall(function()v.Visible=false end)end end
-    elseif type(o)=="userdata"then pcall(function()o.Visible=false end)end end
+    -- Hide key UI
+    for _,o in pairs(k)do
+        local t=type(o)
+        if t=="table"then for _,v in pairs(o)do if type(v)=="userdata"then pcall(function()v.Visible=false end)end end
+        elseif t=="userdata"then pcall(function()o.Visible=false end)end
+    end
 
-    -- ===== TOGGLE MENU (Drawing) =====
-    local m = {}
-    local mw,mh = 210,230
-    local mx,my = 20,20
-    local dragging = false; local dragOff = Vector2.new()
-    local menuOpen = true
+    -- Menu
+    local mw,mh=210,230
+    local mx,my=20,20
+    local dragging=false;local dragOff=Vector2.new()
+    local menuOpen=true
 
-    local function menuHit(x,y,w,h)return mPos.X>=x and mPos.X<=x+w and mPos.Y>=y and mPos.Y<=y+h end
-
-    m.bg = d("Square",{Color=C.panel,Filled=true,Transparency=1})
-    m.border = d("Square",{Color=C.border,Filled=false,Thickness=2,Transparency=1})
-    m.title = d("Text",{Text="ENI Hub",Color=C.border,Size=15,Font=3,Outline=true,OutlineColor=Color3.new(0,0,0)})
-    m.ver = d("Text",{Text="v2",Color=C.dim,Size=10,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
-    m.cl = d("Text",{Text="-",Color=C.sub,Size=16,Font=2,Center=true,Outline=true,OutlineColor=Color3.new(0,0,0)})
+    local m={}
+    m.bg=d("Square",{Color=c_panel,Filled=true,Transparency=1})
+    m.border=d("Square",{Color=c_accent,Filled=false,Thickness=2,Transparency=1})
+    m.title=d("Text",{Text="ENI Hub",Color=c_accent,Size=15,Font=3,Outline=true,OutlineColor=Color3.new(0,0,0)})
+    m.ver=d("Text",{Text="v2",Color=c_dim,Size=10,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
+    m.cl=d("Text",{Text="-",Color=c_sub,Size=18,Font=2,Center=true,Outline=true,OutlineColor=Color3.new(0,0,0)})
 
     local togDefs={{name="Aimbot",key="aim",y=42},{name="ESP",key="esp",y=68},{name="Tracers",key="trace",y=94},{name="FOV Circle",key="fov",y=120},{name="Radar",key="radar",y=146}}
     local toggles={}
     for _,td in ipairs(togDefs)do
         local t={data=td,on=false}
-        t.lbl = d("Text",{Text=td.name,Color=C.text,Size=13,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
-        t.bg = d("Square",{Color=C.btnOff,Filled=true,Transparency=1})
-        t.txt = d("Text",{Text="OFF",Color=Color3.new(1,1,1),Size=10,Center=true,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
+        t.lbl=d("Text",{Text=td.name,Color=c_text,Size=13,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
+        t.bg=d("Square",{Color=c_btnOff,Filled=true,Transparency=1})
+        t.txt=d("Text",{Text="OFF",Color=Color3.new(1,1,1),Size=10,Center=true,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
         toggles[td.key]=t
     end
+    m.fovLbl=d("Text",{Text="FOV: 200",Color=c_sub,Size=11,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
+    m.fovHint=d("Text",{Text="< >",Color=c_dim,Size=13,Font=3,Center=true,Outline=true,OutlineColor=Color3.new(0,0,0)})
+    m.exitHint=d("Text",{Text="F3 quit | Insert hide",Color=Color3.fromRGB(60,60,70),Size=9,Center=true,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
 
-    m.fovLbl = d("Text",{Text="FOV: 200",Color=C.sub,Size=11,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
-    m.fovHint = d("Text",{Text="<  >",Color=C.dim,Size=13,Font=3,Center=true,Outline=true,OutlineColor=Color3.new(0,0,0)})
-    m.exitHint = d("Text",{Text="F3 quit  Â·  Insert hide",Color=Color3.fromRGB(60,60,70),Size=9,Center=true,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
+    local function menuHit(x,y,w,h)return mPos.X>=x and mPos.X<=x+w and mPos.Y>=y and mPos.Y<=y+h end
 
     local function drawMenu()
         if not menuOpen then
-            m.bg.Visible=false;m.border.Visible=false;m.title.Visible=false;m.ver.Visible=false;m.cl.Visible=false
-            m.fovLbl.Visible=false;m.fovHint.Visible=false;m.exitHint.Visible=false
+            for _,o in pairs(m)do if type(o)=="userdata"then o.Visible=false end end
             for _,t in pairs(toggles)do t.lbl.Visible=false;t.bg.Visible=false;t.txt.Visible=false end
             return
         end
-        m.bg.Visible=true;m.border.Visible=true;m.title.Visible=true;m.ver.Visible=true;m.cl.Visible=true
-        m.fovLbl.Visible=true;m.fovHint.Visible=true;m.exitHint.Visible=true
+        for _,o in pairs(m)do if type(o)=="userdata"then o.Visible=true end end
+        for _,t in pairs(toggles)do t.lbl.Visible=true;t.bg.Visible=true;t.txt.Visible=true end
         m.bg.Position=Vector2.new(mx,my);m.bg.Size=Vector2.new(mw,mh)
         m.border.Position=Vector2.new(mx,my);m.border.Size=Vector2.new(mw,mh)
         m.title.Position=Vector2.new(mx+14,my+7);m.ver.Position=Vector2.new(mx+mw-32,my+9)
-        m.cl.Position=Vector2.new(mx+mw-16,my+8)
-        m.fovLbl.Position=Vector2.new(mx+14,my+mh-42);m.fovHint.Position=Vector2.new(mx+mw-28,my+mh-44)
+        m.cl.Position=Vector2.new(mx+mw-14,my+7)
+        m.fovLbl.Position=Vector2.new(mx+14,my+mh-42);m.fovHint.Position=Vector2.new(mx+mw-30,my+mh-44)
         m.exitHint.Position=Vector2.new(mx+mw/2,my+mh-12)
-
-        -- toggle hover
-        hovered=nil
         for _,td in ipairs(togDefs)do
-            local t=toggles[td.key]
-            local bx,bw,bh=mx+mw-52,40,18;local by=my+td.y
-            t.bg.Position=Vector2.new(bx,by);t.bg.Size=Vector2.new(bw,bh)
-            t.lbl.Position=Vector2.new(mx+14,my+td.y);t.txt.Position=Vector2.new(bx+bw/2,by+bh/2-3)
-            local hov=hit(bx,by,bw,bh)
-            if hov then hovered=td.key end
-            if not t.on then t.bg.Color=hov and C.btnHover or C.btnOff end
+            local t=toggles[td.key];local bx,by=mx+mw-52,my+td.y
+            t.bg.Position=Vector2.new(bx,by);t.bg.Size=Vector2.new(40,18)
+            t.lbl.Position=Vector2.new(mx+14,my+td.y);t.txt.Position=Vector2.new(bx+20,by+6)
+            if not t.on then
+                local hov=menuHit(bx,by,40,18)
+                t.bg.Color=hov and c_btnHov or c_btnOff
+            end
         end
-
-        -- close button hover
-        if menuHit(mx+mw-24,my+2,20,20)then m.cl.Color=C.text else m.cl.Color=C.sub end
+        if menuHit(mx+mw-24,my+2,20,20)then m.cl.Color=c_text else m.cl.Color=c_sub end
     end
 
     c(UIS,"InputBegan",function(input)
@@ -286,16 +275,12 @@ local waitCon = RunService.RenderStepped:Connect(function()
         if input.KeyCode==Enum.KeyCode.Right or input.KeyCode==Enum.KeyCode.Period then aimFov=math.min(500,aimFov+10);m.fovLbl.Text="FOV: "..math.floor(aimFov)end
         if input.UserInputType==Enum.UserInputType.MouseButton1 and menuOpen then
             local mp=UIS:GetMouseLocation()
-            -- drag title bar
             if menuHit(mx,my,mw,28)then dragging=true;dragOff=Vector2.new(mp.X-mx,mp.Y-my)end
-            -- close button
             if menuHit(mx+mw-24,my+2,20,20)then menuOpen=false return end
-            -- toggles
             for _,td in ipairs(togDefs)do
-                local t=toggles[td.key]
-                local bx,bw,bh=mx+mw-52,40,18;local by=my+td.y
-                if menuHit(bx,by,bw,bh)then
-                    t.on=not t.on;t.txt.Text=t.on and"ON"or"OFF";t.bg.Color=t.on and C.btnOn or C.btnOff
+                local t=toggles[td.key];local bx,by=mx+mw-52,my+td.y
+                if menuHit(bx,by,40,18)then
+                    t.on=not t.on;t.txt.Text=t.on and"ON"or"OFF";t.bg.Color=t.on and c_accent or c_btnOff
                     if td.key=="aim"then aimOn=t.on elseif td.key=="esp"then espOn=t.on elseif td.key=="trace"then traceOn=t.on elseif td.key=="fov"then fovOn=t.on elseif td.key=="radar"then radarOn=t.on end
                 end
             end
@@ -303,22 +288,18 @@ local waitCon = RunService.RenderStepped:Connect(function()
     end)
     c(UIS,"InputEnded",function(input)if input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end end)
 
-    -- ===== OVERLAY LOOP =====
+    -- Overlay loop
     c(RunService,"RenderStepped",function()
         mPos=UIS:GetMouseLocation()
         local Camera=workspace.CurrentCamera;if not Camera then return end
         local vp=Camera.ViewportSize;local mid=vp/2
-
-        -- drag
         if dragging then local mp=UIS:GetMouseLocation();mx=mp.X-dragOff.X;my=mp.Y-dragOff.Y end
         drawMenu()
-
         circle.Visible=fovOn;if fovOn then circle.Radius=aimFov;circle.Position=mPos end
         cx.v.Visible=true;cx.h.Visible=true;cx.dot.Visible=true
         cx.v.From=Vector2.new(mid.X,mid.Y-8);cx.v.To=Vector2.new(mid.X,mid.Y+8)
         cx.h.From=Vector2.new(mid.X-8,mid.Y);cx.h.To=Vector2.new(mid.X+8,mid.Y)
         cx.dot.Position=mid-Vector2.new(1,1)
-
         if aimOn and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)then
             local best,bd=nil,aimFov
             for _,p in pairs(Players:GetPlayers())do
@@ -338,7 +319,6 @@ local waitCon = RunService.RenderStepped:Connect(function()
             end
             if best then Camera.CFrame=Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position,best.Position),smooth)end
         end
-
         rBg.Visible=radarOn;rR1.Visible=radarOn;rR2.Visible=radarOn;rDot.Visible=radarOn
         if radarOn then
             local rx,ry=vp.X-145,vp.Y-145;rBg.Position=Vector2.new(rx,ry);rBg.Size=Vector2.new(130,130)
@@ -364,7 +344,6 @@ local waitCon = RunService.RenderStepped:Connect(function()
                 end
             end;for i=rdIdx+1,#rDots do hideRD(i)end
         else for i=1,#rDots do hideRD(i)end end
-
         local idx=0
         for _,p in pairs(Players:GetPlayers())do
             if p~=lp then
@@ -391,5 +370,3 @@ local waitCon = RunService.RenderStepped:Connect(function()
         end;for i=idx+1,#espPool do hideEsp(i)end
     end)
 end)
-
-print("ENI Hub v2 â¬ enter key to start")
