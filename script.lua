@@ -231,7 +231,7 @@ local waitCon = RunService.RenderStepped:Connect(function()
     m.border = d("Square",{Color=C.border,Filled=false,Thickness=2,Transparency=1})
     m.title = d("Text",{Text="ENI Hub",Color=C.border,Size=15,Font=3,Outline=true,OutlineColor=Color3.new(0,0,0)})
     m.ver = d("Text",{Text="v2",Color=C.dim,Size=10,Font=2,Outline=true,OutlineColor=Color3.new(0,0,0)})
-    m.cl = d("Text",{Text="גז",Color=C.sub,Size=16,Font=2,Center=true,Outline=true,OutlineColor=Color3.new(0,0,0)})
+    m.cl = d("Text",{Text="-",Color=C.sub,Size=16,Font=2,Center=true,Outline=true,OutlineColor=Color3.new(0,0,0)})
 
     local togDefs={{name="Aimbot",key="aim",y=42},{name="ESP",key="esp",y=68},{name="Tracers",key="trace",y=94},{name="FOV Circle",key="fov",y=120},{name="Radar",key="radar",y=146}}
     local toggles={}
