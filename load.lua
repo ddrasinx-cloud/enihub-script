@@ -1,7 +1,7 @@
 local url = "https://api.github.com/repos/ddrasinx-cloud/enihub-script/contents/script.lua"
 local json = game:HttpGet(url)
 local b64 = json:match('"content":"(.-)"')
-b64 = b64:gsub("\n", "")
+b64 = b64:gsub("%s", "")
 local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 local function decode(s)
   local out = ""
@@ -11,7 +11,7 @@ local function decode(s)
       local c = s:sub(i + j - 1, i + j - 1)
       local idx = 0
       if c ~= "=" then
-        idx = chars:find(c, 1, true) - 1
+        idx = (chars:find(c, 1, true) or 1) - 1
       end
       v = v * 64 + idx
     end
