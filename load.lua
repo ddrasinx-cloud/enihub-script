@@ -1,7 +1,8 @@
+local HttpService = game:GetService("HttpService")
 local url = "https://api.github.com/repos/ddrasinx-cloud/enihub-script/contents/script.lua"
 local json = game:HttpGet(url)
-local b64 = json:match('"content":"(.-)"')
-b64 = b64:gsub("%s", "")
+local data = HttpService:JSONDecode(json)
+local b64 = data.content:gsub("%s", "")
 local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 local function decode(s)
   local out = ""
