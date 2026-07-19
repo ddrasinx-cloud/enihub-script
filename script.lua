@@ -154,10 +154,10 @@ c(UIS,"InputBegan",function(input)
         if kc==Enum.KeyCode.Return or kc==Enum.KeyCode.KeypadEnter then
             if#keyStr==0 then return end
             if validateKey(keyStr)then
-                k.status.Text="Key accepted"k.status.Color=c_green
-                task.wait(0.5)authenticated=true;k.status.Text=""
+                k.status.Text="Key accepted";k.status.Color=c_green
+                task.wait(0.5);authenticated=true;k.status.Text=""
             else
-                k.status.Text="Invalid key"k.status.Color=c_red
+                k.status.Text="Invalid key";k.status.Color=c_red
                 keyStr=""
             end;return
         end
